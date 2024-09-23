@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Profil - Pmeme Indonesia</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Membuat body memenuhi tinggi layar */
+        }
+
+        main {
+            width: 100%;
+            max-width: 400px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            box-sizing: border-box; /* Agar padding tidak mempengaruhi ukuran kotak */
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            font-size: 1em;
+            box-sizing: border-box; /* Menghindari input meluas di luar kotak */
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            width: 100%; /* Mengisi lebar penuh tombol */
+            box-sizing: border-box;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* Preview foto profil */
+        #profile-preview {
+            display: block;
+            margin: 10px auto;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ddd;
+        }
+
+        /* Agar elemen di dalam form tetap rapi */
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <h2>Set Nickname dan Foto Profil</h2>
+
+    <form>
+        <!-- Input nickname -->
+        <input type="text" id="nickname" placeholder="Masukkan nickname" required>
+
+        <!-- Input untuk unggah foto -->
+        <input type="file" id="profile-pic" accept="image/*" onchange="previewImage()" required>
+
+        <!-- Preview foto profil -->
+        <img id="profile-preview" src="https://via.placeholder.com/100" alt="Preview Foto Profil">
+
+        <!-- Tombol submit -->
+        <button type="button" onclick="setProfile()">Submit</button>
+    </form>
+</main>
+
+<script>
+    // Fungsi untuk menampilkan preview foto profil yang di-upload
+    function previewImage() {
+        const file = document.getElementById('profile-pic').files[0];
+        const preview = document.getElementById('profile-preview');
+        const reader = new FileReader();
+
+        reader.onloadend = function() {
+            preview.src = reader.result; // Tampilkan foto sebagai preview
+        };
+
+        if (file) {
+            reader.readAsDataURL(file); // Konversi file ke Data URL
+        } else {
+            preview.src = "https://via.placeholder.com/100"; // Placeholder default
+        }
+    }
+
+    // Fungsi untuk menyimpan nickname dan foto profil
+    function setProfile() {
+        const nickname = document.getElementById('nickname').value;
+        const profilePic = document.getElementById('profile-pic').files[0];
+
+        if (!nickname || !profilePic) {
+            alert("Nickname dan foto profil wajib diisi!");
+            return;
+        }
+
+        // Simpan nickname di localStorage
+        localStorage.setItem('nickname', nickname);
+
+        // Simpan foto profil sebagai URL blob
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            localStorage.setItem('profilePic', reader.result);
+            window.location.href = '2.html'; // Pindah ke scene 2
+        };
+        reader.readAsDataURL(profilePic);
+    }
+</script>
+
+</body>
+</html>

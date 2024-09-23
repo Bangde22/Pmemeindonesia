@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pmeme Indonesia</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-section label {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .upload-section label:hover {
+            background-color: #0056b3;
+        }
+
+        .upload-section .post-button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .upload-section .post-button:hover {
+            background-color: #218838;
+        }
+
+        .post {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+        }
+
+        .post img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .post-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .post-actions button, .post-actions a {
+            background-color: #007bff;
+            border: none;
+            padding: 10px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .post-actions button:hover, .post-actions a:hover {
+            background-color: #0056b3;
+        }
+
+        .comments-section {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .comment-box {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .comment-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    Pmeme Indonesia
+</header>
+
+<main>
+    <div class="upload-section">
+        <label for="upload-photo">Pilih Foto</label>
+        <input type="file" id="upload-photo">
+        <button class="post-button">Posting Foto</button>
+    </div>
+
+    <!-- Contoh postingan -->
+    <div class="post" id="post-1">
+        <img src="https://via.placeholder.com/600x400" alt="Uploaded Photo">
+        <div class="post-actions">
+            <button onclick="votePost('post-1')">👍 Vote</button>
+            <a href="#" download onclick="downloadPost('post-1')">Download</a>
+            <button onclick="toggleCommentSection('post-1')">Komentar</button>
+        </div>
+        <div class="comments-section" id="comments-section-post-1">
+            <!-- Komentar akan dimuat di sini -->
+        </div>
+        <textarea class="comment-box" id="comment-box-post-1" placeholder="Tulis komentar..."></textarea>
+        <button onclick="submitComment('post-1')">Kirim Komentar</button>
+    </div>
+
+</main>
+
+<script>
+    // Mengambil profil pengguna dari localStorage
+    const userNickname = localStorage.getItem('nickname');
+    const userProfilePic = localStorage.getItem('profilePic');
+
+    if (!userNickname || !userProfilePic) {
+        alert("Silakan set nickname dan foto profil terlebih dahulu.");
+        window.location.href = 'index.html'; // Redirect ke scene pertama jika belum ada profil
+    }
+
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+        apiKey: "YOUR_FIREBASE_API_KEY",
+        authDomain: "YOUR_FIREBASE_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_FIREBASE_PROJECT_ID",
+        storageBucket: "YOUR_FIREBASE_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Fungsi untuk vote post
+    function votePost(postId) {
+        const postRef = db.collection('posts').doc(postId);
+        postRef.update({
+            votes: firebase.firestore.FieldValue.arrayUnion(userNickname) // Gunakan nickname untuk vote
+        });
+    }
+
+    // Fungsi untuk download post
+    function downloadPost(postId) {
+        const postRef = db.collection('posts').doc(postId);
+        postRef.update({
+            downloads: firebase.firestore.FieldValue.increment(1)
+        });
+    }
+
+    // Fungsi untuk menampilkan atau menyembunyikan kolom komentar
+    function toggleCommentSection(postId) {
+        const commentSection = document.getElementById(`comments-section-${postId}`);
+        if (commentSection.style.display === 'none' || commentSection.style.display === '') {
+            loadComments(postId);
+            commentSection.style.display = 'block';
+        } else {
+            commentSection.style.display = 'none';
+        }
+    }
+
+    // Fungsi untuk memuat komentar dari Firestore
+    function loadComments(postId) {
+        const commentSection = document.getElementById(`comments-section-${postId}`);
+        commentSection.innerHTML = ''; // Kosongkan kolom komentar sebelum memuat ulang
+        const postRef = db.collection('posts').doc(postId);
+        postRef.get().then(doc => {
+            const comments = doc.data().comments || [];
+            comments.slice(0, 5).forEach(comment => { // Tampilkan hanya 5 komentar pertama
+                const commentItem = document.createElement('div');
+                commentItem.classList.add('comment-item');
+                commentItem.textContent = `${comment.name}: ${comment.comment}`;
+                commentSection.appendChild(commentItem);
+            });
+
+            // Tambahkan tombol 'Lihat lebih banyak' jika ada lebih dari 5 komentar
+            if (comments.length > 5) {
+                const seeMoreButton = document.createElement('button');
+                seeMoreButton.textContent = 'Lihat lebih banyak';
+                seeMoreButton.onclick = function() {
+                    loadMoreComments(postId, comments.slice(5));
+                };
+                commentSection.appendChild(seeMoreButton);
+            }
+        });
+    }
+
+    // Fungsi untuk memuat lebih banyak komentar
+    function loadMoreComments(postId, remainingComments) {
+        const commentSection = document.getElementById(`comments-section-${postId}`);
+        remainingComments.forEach(comment => {
+            const commentItem = document.createElement('div');
+            commentItem.classList.add('comment-item');
+            commentItem.textContent = `${comment.name}: ${comment.comment}`;
+            commentSection.appendChild(commentItem);
+        });
+    }
+
+    // Fungsi untuk submit komentar
+    function submitComment(postId) {
+        const commentText = document.getElementById(`comment-box-${postId}`).value;
+        if (commentText) {
+            const postRef = db.collection('posts').doc(postId);
+            postRef.update({
+                comments: firebase.firestore.FieldValue.arrayUnion({
+                    name: userNickname, // Gunakan nickname dari localStorage
+                    photo: userProfilePic, // Gunakan foto profil dari localStorage
+                    comment: commentText
+                })
+            }).then(() => {
+                document.getElementById(`
